@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <PackAsTool>true</PackAsTool>
+	<ToolCommandName>mapdownloader</ToolCommandName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;CS8632</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpZipLib" Version="1.3.2" />
+    <PackageReference Include="Spectre.Console" Version="0.40.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.21216.1" />
+  </ItemGroup>
+
+</Project>

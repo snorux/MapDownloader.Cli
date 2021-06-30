@@ -78,6 +78,10 @@ namespace MapDownloader
                         }
                     });
 
+                AnsiConsole.MarkupLine("\n[red3]Please ensure the following information is correct:[/]");
+                AnsiConsole.MarkupLine($"[yellow]FastDL URL:[/] {jsonModel.FastDL}");
+                AnsiConsole.MarkupLine($"[yellow]Output Directory:[/] {(String.IsNullOrWhiteSpace(output) ? jsonModel.OutputDirectory : output)}\n");
+
                 if (missingMaps.Count > 0)
                     WriteLogMessage($"[lime]{missingMaps.Count}[/] map(s) missing from local directory, awaiting confirmation to download");
                 else
@@ -119,7 +123,7 @@ namespace MapDownloader
                 })
                 .Start(ctx =>
                 {
-                    var task = ctx.AddTask("Downloading and extracting files...");
+                    var task = ctx.AddTask("Downloading and Extracting files...");
                     task.MaxValue(missingMaps.Count);
 
                     foreach (string map in missingMaps)
@@ -151,38 +155,71 @@ namespace MapDownloader
                     var downloadTask = ctx.AddTask("Downloading files...");
                     var extractTask = ctx.AddTask("Extracting files...");
 
-                    double incrementAmount = (double)1 / missingMaps.Count * 100;
+                    downloadTask.MaxValue(missingMaps.Count);
+                    extractTask.MaxValue(missingMaps.Count);
 
-                    var downloadBlock = new TransformBlock<DownloadModel, DownloadModel>(async filename =>
+                    var downloadBlock = new TransformBlock<string, Tuple<string, HttpResponseMessage>>(async mapName =>
                     {
-                        AnsiConsole.WriteLine("Download {0}", filename.MapName);
-                        string url = $@"https://fastdlv2.gflclan.com/file/gflfastdlv2/csgo/maps/{filename.MapName}.bsp.bz2";
-                        var result = await _httpClient.GetAsync(url);
+                        try
+                        {
+                            WriteLogMessage($"Downloading map: [bold olive]{mapName}[/]");
 
-                        DownloadModel dm = new DownloadModel() { MapName = filename.MapName, FileResult = result };
-                        downloadTask.Increment(incrementAmount);
-                        return dm;
+                            Uri downloadUrl = new Uri($"{fastDLUrl}{mapName}.bsp.bz2");
+                            var result = await _httpClient.GetAsync(downloadUrl);
+
+                            WriteLogMessage($"Downloading map: [bold olive]{mapName}[/] [green]success![/]", false);
+
+                            downloadTask.Increment(1);
+                            return new Tuple<string, HttpResponseMessage>(mapName, result);
+                        }
+                        catch (Exception ex)
+                        {
+                            WriteLogMessage($"Downloading map: [bold olive]{mapName}[/] [red]failed![/]", false);
+                            AnsiConsole.WriteException(ex);
+                        }
+
+                        // Increment task no matter success or fail:
+                        downloadTask.Increment(1);
+
+                        return null;
                     },
                     new ExecutionDataflowBlockOptions
                     {
-                        MaxDegreeOfParallelism = 2,
+                        MaxDegreeOfParallelism = 1,
                     });
 
-                    var extractBlock = new ActionBlock<DownloadModel>(async model =>
+                    var extractBlock = new ActionBlock<Tuple<string, HttpResponseMessage>>(async model =>
                     {
-                        AnsiConsole.WriteLine("Unzip {0}", model.MapName);
-
-                        using (Stream fileStream = model.FileResult.Content.ReadAsStreamAsync().Result)
-                        using (Stream stream = File.Create(@$"D:\Projects\C#\TPLTest\TPLTest\TPLTest\bin\Debug\netcoreapp3.1\Downloaded\{model.MapName}.bsp"))
+                        try
                         {
-                            await Task.Run(() => BZip2.Decompress(fileStream, stream, true));
+                            if (model != null)
+                            {
+                                WriteLogMessage($"Extracting map: [bold olive]{model.Item1}[/]");
+
+                                using (Stream fileStream = await model.Item2.Content.ReadAsStreamAsync())
+                                using (Stream stream = File.Create(Path.Combine(new[] { outputDir, $"{model.Item1}.bsp" })))
+                                {
+                                    await Task.Run(() => 
+                                        BZip2.Decompress(fileStream, stream, true)
+                                    );
+                                    WriteLogMessage($"Extracting map: [bold olive]{model.Item1}[/] [green]success![/]", false);
+                                }
+                            }
                         }
-                        extractTask.Increment(incrementAmount);
+                        catch (Exception ex)
+                        {
+                            WriteLogMessage($"Extracting map: [bold olive]{model.Item1}[/] [red]failed![/]", false);
+                            AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
+                        }
+
+                        // Increment task no matter success or fail:
+                        extractTask.Increment(1);
                     },
                     new ExecutionDataflowBlockOptions
                     {
                         BoundedCapacity = Environment.ProcessorCount * 3,
                         MaxDegreeOfParallelism = Environment.ProcessorCount,
+                        //MaxDegreeOfParallelism = DataflowBlockOptions.Unbounded
                     });
 
                     downloadBlock.LinkTo(
@@ -194,8 +231,9 @@ namespace MapDownloader
 
                     foreach (string map in missingMaps)
                     {
-                        DownloadModel downloadModel = new DownloadModel() { MapName = map, OutputDir = outputDir };
-                        downloadBlock.Post(downloadModel);
+                        downloadBlock.Post(map);
+                        // Extraction sometimes take awhile on HDD...
+                        // Thread.Sleep(2000);
                     }
 
                     downloadBlock.Complete();
@@ -210,10 +248,12 @@ namespace MapDownloader
             try
             {
                 WriteLogMessage($"Downloading map: [bold olive]{mapName}[/]");
+
                 Uri downloadUrl = new Uri($"{fastDLUrl}{mapName}.bsp.bz2");
                 var result = _httpClient.GetAsync(downloadUrl).Result;
                 result.EnsureSuccessStatusCode();
                 resultStream = result.Content.ReadAsStreamAsync().Result;
+
                 WriteLogMessage($"Downloading map: [bold olive]{mapName}[/] [green]success![/]", false);
             }
             catch (Exception ex)
@@ -230,7 +270,8 @@ namespace MapDownloader
             try
             {
                 WriteLogMessage($"Extracting map: [bold olive]{mapName}[/]");
-                using (Stream outStream = File.Create($@"D:\Projects\C#\TPLTest\TPLTest\TPLTest\bin\Debug\netcoreapp3.1\Downloaded\{mapName}.bsp"))
+
+                using (Stream outStream = File.Create(Path.Combine(new[] { outputDir, $"{mapName}.bsp" })))
                 {
                     Task.Run(() => BZip2.Decompress(fileStream, outStream, true)).Wait();
                     WriteLogMessage($"Extracting map: [bold olive]{mapName}[/] [green]success![/]", false);

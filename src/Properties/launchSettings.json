@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MapDownloader": {
+      "commandName": "Project",
+      "commandLineArgs": "-i gfl.json --output D:\\Projects\\C#\\TPLTest\\TPLTest\\TPLTest\\bin\\Debug\\netcoreapp3.1\\New --async"
+    }
+  }
+}

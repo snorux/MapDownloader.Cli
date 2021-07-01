@@ -16,7 +16,7 @@ namespace MapDownloader
     partial class Program
     {
         private static readonly HttpClient _httpClient = new HttpClient();
-        static int SetupDownload(string input, string? output, string? csv, bool multithread)
+        static int SetupDownload(string input, string? output, string? csv, string? fastdl, bool multithread)
         {
             if (!IsValidFile(input, ".json"))
                 return 1;
@@ -79,7 +79,7 @@ namespace MapDownloader
                     });
 
                 AnsiConsole.MarkupLine("\n[red3]Please ensure the following information is correct:[/]");
-                AnsiConsole.MarkupLine($"[yellow]FastDL URL:[/] {jsonModel.FastDL}");
+                AnsiConsole.MarkupLine($"[yellow]FastDL URL:[/] {(String.IsNullOrWhiteSpace(fastdl) ? jsonModel.FastDL : fastdl)}");
                 AnsiConsole.MarkupLine($"[yellow]Output Directory:[/] {(String.IsNullOrWhiteSpace(output) ? jsonModel.OutputDirectory : output)}\n");
 
                 if (missingMaps.Count > 0)
@@ -96,7 +96,7 @@ namespace MapDownloader
                     return 0;
                 }
 
-                DownloadFilesAsync(missingMaps, String.IsNullOrWhiteSpace(output) ? jsonModel.OutputDirectory : output, jsonModel.FastDL, multithread);
+                DownloadFilesAsync(missingMaps, String.IsNullOrWhiteSpace(output) ? jsonModel.OutputDirectory : output, String.IsNullOrWhiteSpace(fastdl) ? jsonModel.FastDL : fastdl, multithread);
             }
             return 0;
         }

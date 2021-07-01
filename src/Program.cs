@@ -24,10 +24,13 @@ namespace MapDownloader
                 new Option<string?>(
                     "--csv",
                     description: "An optional argument to override the csv located in the json file. Must be locally hosted.") { ArgumentHelpName = "Path to .csv file"},
+                new Option<string?>(
+                    "--fastdl",
+                    description: "An optional argument to override the fastdl link located in the json file.") { ArgumentHelpName = "Link to fastDL" },
                 new Option(new[] { "--async", "-a", "--multi-thread" }, "Downloads and extract the file concurrently.")
             };
 
-            rootCommand.Handler = CommandHandler.Create<string, string?, string?, bool>(SetupDownload);
+            rootCommand.Handler = CommandHandler.Create<string, string?, string?, string?, bool>(SetupDownload);
 
             AnsiConsole.Render(new FigletText("MapDownloader")
                 .Color(Color.Green)

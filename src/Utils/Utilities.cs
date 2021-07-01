@@ -1,11 +1,7 @@
-﻿using MapDownloader.Model;
-using Spectre.Console;
+﻿using Spectre.Console;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace MapDownloader
 {
@@ -78,7 +74,7 @@ namespace MapDownloader
                 if (Directory.Exists(actualOutputDir))
                     returnValue = Directory.GetFiles($@"{actualOutputDir}", "*bsp").Select(file => Path.GetFileNameWithoutExtension(file).ToLower()).ToArray();
                 else
-                    throw new Exception("Directory does not exist.");
+                    throw new Exception("Output directory does not exist.");
             }
             catch (Exception ex)
             {

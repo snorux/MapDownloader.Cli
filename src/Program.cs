@@ -30,6 +30,7 @@ namespace MapDownloader
                 new Option(new[] { "--async", "-a", "--multi-thread" }, "Downloads and extract the file concurrently.")
             };
 
+            rootCommand.Description = "Map Downloader";
             rootCommand.Handler = CommandHandler.Create<string, string?, string?, string?, bool>(SetupDownload);
 
             AnsiConsole.Render(new FigletText("MapDownloader")

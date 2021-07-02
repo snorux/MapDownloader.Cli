@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
-using System.Threading;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using ICSharpCode.SharpZipLib.BZip2;
@@ -16,6 +16,9 @@ namespace MapDownloader
     partial class Program
     {
         private static readonly HttpClient _httpClient = new HttpClient();
+        private static int succeededMaps = 0;
+        private static int failedMaps = 0;
+
         static int SetupDownload(string input, string? output, string? csv, string? fastdl, bool multithread)
         {
             if (!IsValidFile(input, ".json"))
@@ -36,10 +39,6 @@ namespace MapDownloader
 
             if (jsonModel != null)
             {
-                // Validate the JsonModel first?:
-                // Read from csv and store it first:
-                // Check if output is empty, if it isn't override the file directory:
-                // Read from directory and get the files if it doesn't exist, download them:
                 if (!jsonModel.FastDL.IsValidURL())
                 {
                     AnsiConsole.MarkupLine("[red]ERROR:[/] [grey]Invalid FastDL URL in .json file... exiting...[/]");
@@ -109,6 +108,8 @@ namespace MapDownloader
                 Environment.Exit(1);
             }
 
+            Stopwatch stopWatch = Stopwatch.StartNew();
+
             if (!multithread)
             {
                 AnsiConsole.Progress()
@@ -123,7 +124,7 @@ namespace MapDownloader
                 })
                 .Start(ctx =>
                 {
-                    var task = ctx.AddTask("Downloading and Extracting files...");
+                    var task = ctx.AddTask("[aqua]Downloading and Extracting files[/]");
                     task.MaxValue(missingMaps.Count);
 
                     foreach (string map in missingMaps)
@@ -152,8 +153,8 @@ namespace MapDownloader
                 })
                 .Start(ctx =>
                 {
-                    var downloadTask = ctx.AddTask("Downloading files...");
-                    var extractTask = ctx.AddTask("Extracting files...");
+                    var downloadTask = ctx.AddTask("[aqua]Downloading files[/]");
+                    var extractTask = ctx.AddTask("[aqua]Extracting files[/]");
 
                     downloadTask.MaxValue(missingMaps.Count);
                     extractTask.MaxValue(missingMaps.Count);
@@ -176,6 +177,9 @@ namespace MapDownloader
                         {
                             WriteLogMessage($"Downloading map: [bold olive]{mapName}[/] [red]failed![/]", false);
                             AnsiConsole.WriteException(ex);
+
+                            // Increment failed map counter:
+                            failedMaps++;
                         }
 
                         // Increment task no matter success or fail:
@@ -203,6 +207,9 @@ namespace MapDownloader
                                         BZip2.Decompress(fileStream, stream, true)
                                     );
                                     WriteLogMessage($"Extracting map: [bold olive]{model.Item1}[/] [green]success![/]", false);
+
+                                    // Increment succeeded map counter:
+                                    succeededMaps++;
                                 }
                             }
                         }
@@ -210,6 +217,9 @@ namespace MapDownloader
                         {
                             WriteLogMessage($"Extracting map: [bold olive]{model.Item1}[/] [red]failed![/]", false);
                             AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
+
+                            // Increment failed map counter:
+                            failedMaps++;
                         }
 
                         // Increment task no matter success or fail:
@@ -240,6 +250,10 @@ namespace MapDownloader
                     extractBlock.Completion.GetAwaiter().GetResult();
                 });
             }
+
+            stopWatch.Stop();
+
+            AnsiConsole.MarkupLine($"[lime]Actions completed.[/] Elapsed time: [aqua]{stopWatch.Elapsed.Hours}h {stopWatch.Elapsed.Minutes}m {stopWatch.Elapsed.Seconds}s[/]. [green underline]{succeededMaps}[/] success with [red underline]{failedMaps}[/] failures.");
         }
 
         static Stream DownloadMap(string mapName, string fastDLUrl)
@@ -260,6 +274,9 @@ namespace MapDownloader
             {
                 WriteLogMessage($"Downloading map: [bold olive]{mapName}[/] [red]failed![/]", false);
                 AnsiConsole.WriteException(ex);
+
+                // Increment failed map counter:
+                failedMaps++;
             }
 
             return resultStream;
@@ -275,12 +292,18 @@ namespace MapDownloader
                 {
                     Task.Run(() => BZip2.Decompress(fileStream, outStream, true)).Wait();
                     WriteLogMessage($"Extracting map: [bold olive]{mapName}[/] [green]success![/]", false);
+
+                    // Increment succeeded map counter:
+                    succeededMaps++;
                 }
             }
             catch(Exception ex)
             {
                 WriteLogMessage($"Extracting map: [bold olive]{mapName}[/] [red]failed![/]", false);
                 AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
+
+                // Increment failed map counter:
+                failedMaps++;
             }
         }
     }

@@ -18,10 +18,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup dotnet SDK ${{ matrix.dotnet }}
+      - name: Setup dotnet SDK 3.1.410
         uses: actions/setup-dotnet@v1
         with:
-            dotnet-version: ${{ matrix.dotnet }}
+            dotnet-version: 3.1.410
+
+      - name: Setup dotnet SDK 5.0.301
+        uses: actions/setup-dotnet@v1
+        with:
+            dotnet-version: 5.0.301
       
       - name: Build
         shell: bash

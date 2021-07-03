@@ -1,0 +1,59 @@
+name: Publish package to NuGet
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+
+  # Ensures it builds on all platforms
+  build:
+    name: Build Tool
+    strategy:
+      matrix:
+        os: [ "ubuntu-latest", "windows-latest", "macos-latest" ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup dotnet SDK 3.1.410
+        uses: actions/setup-dotnet@v1
+        with:
+            dotnet-version: 3.1.410
+
+      - name: Setup dotnet SDK 5.0.301
+        uses: actions/setup-dotnet@v1
+        with:
+            dotnet-version: 5.0.301
+      
+      - name: Build
+        shell: bash
+        run: |
+          dotnet tool restore
+          dotnet cake
+
+
+  publish:
+    name: Publish to NuGet
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup dotnet SDK 3.1.410
+        uses: actions/setup-dotnet@v1
+        with:
+            dotnet-version: 3.1.410
+
+      - name: Setup dotnet SDK 5.0.301
+        uses: actions/setup-dotnet@v1
+        with:
+            dotnet-version: 5.0.301
+
+      - name: Publish build
+        shell: bash
+        run: |
+          dotnet tool restore
+          dotnet cake --target="Publish" \
+            --nuget-key="${{ secrets.NUGET_APIKEY }}"

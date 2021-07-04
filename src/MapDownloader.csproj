@@ -2,10 +2,13 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
     <PackAsTool>true</PackAsTool>
 	<ToolCommandName>mapdownloader</ToolCommandName>
-	<Version>1.1.0</Version>
+	<Version>1.2.0</Version>
+
+	<RepositoryUrl>https://github.com/SnowyGFL/MapDownloader.Cli.git</RepositoryUrl>
+	<RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

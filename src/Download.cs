@@ -79,7 +79,8 @@ namespace MapDownloader
 
                 AnsiConsole.MarkupLine("\n[red3]Please ensure the following information is correct:[/]");
                 AnsiConsole.MarkupLine($"[yellow]FastDL URL:[/] {(String.IsNullOrWhiteSpace(fastdl) ? jsonModel.FastDL : fastdl)}");
-                AnsiConsole.MarkupLine($"[yellow]Output Directory:[/] {(String.IsNullOrWhiteSpace(output) ? jsonModel.OutputDirectory : output)}\n");
+                AnsiConsole.MarkupLine($"[yellow]Output Directory:[/] {(String.IsNullOrWhiteSpace(output) ? jsonModel.OutputDirectory : output)}");
+                AnsiConsole.MarkupLine($"[yellow]Async Download:[/] {multithread}\n");
 
                 if (missingMaps.Count > 0)
                     WriteLogMessage($"[lime]{missingMaps.Count}[/] map(s) missing from local directory, awaiting confirmation to download");
@@ -167,6 +168,7 @@ namespace MapDownloader
 
                             Uri downloadUrl = new Uri($"{fastDLUrl}{mapName}.bsp.bz2");
                             var result = await _httpClient.GetAsync(downloadUrl);
+                            result.EnsureSuccessStatusCode();
 
                             WriteLogMessage($"Downloading map: [bold olive]{mapName}[/] [green]success![/]", false);
 

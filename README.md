@@ -101,3 +101,5 @@ Asynchronous download:
 ![Asynchronous Download](assets/asyncdownload.png)
 Info screen:
 ![Info](assets/info.png)
+Ubuntu download:
+![Ubuntu](assets/ubuntu.png)

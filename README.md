@@ -94,6 +94,9 @@ If you wish to override any of the settings in the json, just include it in the 
 **Q:** I want improvements!  
 **A:** Sure, open a pull request and describe the feature you want added.
 
+**Q:** What if I cancelled while downloading/extracting midway?  
+**A:** Unfortunately, the file might get corrupted if you interrupted the download/extract process. Find the file in the output directory and delete it.
+
 ## Screenshots
 Synchronous download:
 ![Synchronous Download](assets/syncdownload.png)

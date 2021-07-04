@@ -30,6 +30,10 @@ The fastest and easiest way to get the tool is to install it via NuGet Package
 ```csharp
 > dotnet tool install --global MapDownloader
 ```
+If you want to update the tool, run the following command:
+```csharp
+> dotnet tool update --global MapDownloader
+```
 
 ## Uninstalling
 The easiest way to uninstall the tool is by running the following command:
